@@ -5,5 +5,8 @@ import (
 )
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("OK"))
+	err := htmlRoot(w)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
