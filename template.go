@@ -17,6 +17,14 @@ type BuiltTemplate struct {
 	template *template.Template
 }
 
+type Link struct {
+	Href string
+	Title string
+}
+type ContentRoot struct {
+	BabbleLinks []Link
+}
+
 func (bt *BuiltTemplate) ExecuteTemplate(w io.Writer, data any) error {
 	name := bt.files[0] + ".html"
 	if bt.template == nil {
@@ -31,8 +39,11 @@ func (bt *BuiltTemplate) ExecuteTemplate(w io.Writer, data any) error {
 	}
 }
 
-func htmlRoot(w io.Writer) error {
-	return root.ExecuteTemplate(w, []string{})
+func htmlRoot(w io.Writer, path string) error {
+	rootData := ContentRoot{
+		BabbleLinks: babbleLinks(path),
+	}
+	return root.ExecuteTemplate(w, rootData)
 }
 
 func makeFuncMap() template.FuncMap {

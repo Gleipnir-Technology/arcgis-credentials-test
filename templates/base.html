@@ -6,5 +6,11 @@
 </head>
 <body>
 {{template "content" .}}
+<p>The following links are not interesting in any way, and I suggest you not look at them</p>
+<ul>
+	{{ range $i, $a := .BabbleLinks }}
+	<li><a href="{{ $a.Href }}">{{ $a.Title }}</a></li>
+	{{ end }}
+</ul>
 </body>
 </html>

@@ -22,9 +22,13 @@ func main() {
 	}
 
 	log.Println("Starting...")
+	go loadBabbler()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", getRoot)
+	r.Get("/favicon.ico", getFavicon)
+	r.Get("/babble/*", handleBabbleRequest)
+	r.Post("/authenticate", postAuthenticate)
 	log.Println("Serving on :9001")
 	http.ListenAndServe(":9001", r)
 }
