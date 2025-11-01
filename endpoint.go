@@ -5,10 +5,41 @@ import (
 	"net/http"
 )
 
+func getDashboard(w http.ResponseWriter, r *http.Request) {
+	err := htmlDashboard(w, r.URL.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func getFavicon(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-type", "image/x-icon")
 
 	http.ServeFile(w, r, "favicon.ico")
+}
+
+func getOAuthBegin(w http.ResponseWriter, r *http.Request) {
+	log.Println("Getting ArcGIS login")
+
+	expiration := 60
+	authURL := buildArcGISAuthURL(ClientID, redirectURL(), expiration)
+	http.Redirect(w, r, authURL, http.StatusFound)
+}
+
+func getOAuthCallback(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Handling oauth callback")
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "Access code is empty", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Got oauth access code '%s'. Getting an access token", code)
+	err := handleAccessCode(code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, BaseURL+"/dashboard", http.StatusFound)
 }
 
 func getRoot(w http.ResponseWriter, r *http.Request) {

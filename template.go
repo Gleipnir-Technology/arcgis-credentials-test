@@ -9,17 +9,21 @@ import (
 )
 
 var (
-	root = newBuiltTemplate("root", "base")
+	root      = newBuiltTemplate("root", "base")
+	dashboard = newBuiltTemplate("dashboard", "base")
 )
 
 type BuiltTemplate struct {
-	files []string
+	files    []string
 	template *template.Template
 }
 
 type Link struct {
-	Href string
+	Href  string
 	Title string
+}
+type ContentDashboard struct {
+	BabbleLinks []Link
 }
 type ContentRoot struct {
 	BabbleLinks []Link
@@ -39,11 +43,18 @@ func (bt *BuiltTemplate) ExecuteTemplate(w io.Writer, data any) error {
 	}
 }
 
-func htmlRoot(w io.Writer, path string) error {
-	rootData := ContentRoot{
+func htmlDashboard(w io.Writer, path string) error {
+	data := ContentDashboard{
 		BabbleLinks: babbleLinks(path),
 	}
-	return root.ExecuteTemplate(w, rootData)
+	return dashboard.ExecuteTemplate(w, data)
+}
+
+func htmlRoot(w io.Writer, path string) error {
+	data := ContentRoot{
+		BabbleLinks: babbleLinks(path),
+	}
+	return root.ExecuteTemplate(w, data)
 }
 
 func makeFuncMap() template.FuncMap {
@@ -62,12 +73,12 @@ func newBuiltTemplate(files ...string) BuiltTemplate {
 	}
 	if files_on_disk {
 		return BuiltTemplate{
-			files: files,
+			files:    files,
 			template: nil,
 		}
 	}
 	return BuiltTemplate{
-		files: files,
+		files:    files,
 		template: parseEmbedded(files),
 	}
 }
@@ -80,7 +91,7 @@ func parseFromDisk(files []string) *template.Template {
 	funcMap := makeFuncMap()
 	paths := make([]string, 0)
 	for _, f := range files {
-		paths = append(paths, "templates/" + f + ".html")
+		paths = append(paths, "templates/"+f+".html")
 	}
 	name := files[0] + ".html"
 	templ, err := template.New(name).Funcs(funcMap).ParseFiles(paths...)
