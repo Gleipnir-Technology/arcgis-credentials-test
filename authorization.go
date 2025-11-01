@@ -27,7 +27,7 @@ type OAuthTokenResponse struct {
 
 var TokenDatabase map[string]OAuthTokenResponse
 
-func handleAccessCode(code string) error {
+func handleAccessCode(code string) (*OAuthTokenResponse, error) {
 	baseURL := "https://www.arcgis.com/sharing/rest/oauth2/token/"
 
 	//params.Add("code_verifier", "S256")
@@ -41,42 +41,42 @@ func handleAccessCode(code string) error {
 
 	req, err := http.NewRequest("POST", baseURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return fmt.Errorf("Failed to create request: %v", err)
+		return nil, fmt.Errorf("Failed to create request: %v", err)
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	client := http.Client{}
 	log.Printf("POST %s", baseURL)
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("Failed to do request: %v", err)
+		return nil, fmt.Errorf("Failed to do request: %v", err)
 	}
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
 	log.Printf("Response %d", resp.StatusCode)
 	if resp.StatusCode >= http.StatusBadRequest {
 		if err != nil {
-			return fmt.Errorf("Got status code %d and failed to read response body: %v", resp.StatusCode, err)
+			return nil, fmt.Errorf("Got status code %d and failed to read response body: %v", resp.StatusCode, err)
 		}
 		bodyString := string(bodyBytes)
 		var errorResp map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &errorResp); err == nil {
-			return fmt.Errorf("API response JSON error: %d: %v", resp.StatusCode, errorResp)
+			return nil, fmt.Errorf("API response JSON error: %d: %v", resp.StatusCode, errorResp)
 		}
-		return fmt.Errorf("API returned error status %d: %s", resp.StatusCode, bodyString)
+		return nil, fmt.Errorf("API returned error status %d: %s", resp.StatusCode, bodyString)
 	}
 	var tokenResponse OAuthTokenResponse
 	err = json.Unmarshal(bodyBytes, &tokenResponse)
 	if err != nil {
-		return fmt.Errorf("Failed to unmarshal JSON: %v", err)
+		return nil, fmt.Errorf("Failed to unmarshal JSON: %v", err)
 	}
 	log.Printf("Refresh token '%s'", tokenResponse.RefreshToken)
 	TokenDatabase[tokenResponse.Username] = tokenResponse
 
 	err = saveTokenDatabase()
 	if err != nil {
-		return fmt.Errorf("Failed to save token database: %v", err)
+		return nil, fmt.Errorf("Failed to save token database: %v", err)
 	}
-	return nil
+	return &tokenResponse, nil
 }
 
 // Helper function to generate code challenge from code verifier

@@ -6,7 +6,8 @@ import (
 )
 
 func getDashboard(w http.ResponseWriter, r *http.Request) {
-	err := htmlDashboard(w, r.URL.Path)
+	username := sessionManager.GetString(r.Context(), "username")
+	err := htmlDashboard(w, r.URL.Path, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -34,11 +35,12 @@ func getOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("Got oauth access code '%s'. Getting an access token", code)
-	err := handleAccessCode(code)
+	token, err := handleAccessCode(code)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	sessionManager.Put(r.Context(), "username", token.Username)
 	http.Redirect(w, r, BaseURL+"/dashboard", http.StatusFound)
 }
 

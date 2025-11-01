@@ -24,6 +24,7 @@ type Link struct {
 }
 type ContentDashboard struct {
 	BabbleLinks []Link
+	Username    string
 }
 type ContentRoot struct {
 	BabbleLinks []Link
@@ -43,9 +44,10 @@ func (bt *BuiltTemplate) ExecuteTemplate(w io.Writer, data any) error {
 	}
 }
 
-func htmlDashboard(w io.Writer, path string) error {
+func htmlDashboard(w io.Writer, path string, username string) error {
 	data := ContentDashboard{
 		BabbleLinks: babbleLinks(path),
+		Username:    username,
 	}
 	return dashboard.ExecuteTemplate(w, data)
 }
