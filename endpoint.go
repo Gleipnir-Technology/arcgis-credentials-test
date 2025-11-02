@@ -18,15 +18,15 @@ func getDashboard(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, BaseURL+"/", http.StatusFound)
 		return
 	}
-	/*search, err := findFieldseeker(token.AccessToken)
+	tryPortal(token.AccessToken)
+	search, err := findFieldseeker(token.AccessToken)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Search: %s", search)*/
-	tryPortal(token.AccessToken)
+	log.Printf("Search: %s", search)
 
-	err := htmlDashboard(w, r.URL.Path, username)
+	err = htmlDashboard(w, r.URL.Path, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
+	"os"
 )
 
 type ArcGISItem struct {
@@ -39,13 +40,14 @@ type ArcGISSearchResponse struct {
 
 func findFieldseeker(access string) (*ArcGISSearchResponse, error) {
 	baseURL := "https://www.arcgis.com/sharing/rest/search?q=FieldseekerGIS&f=pjson"
-	form := url.Values{
-		"q": []string{"FieldseekerGIS"},
-		"f": []string{"pjson"},
+	req, err := http.NewRequest("GET", baseURL, nil)
+	if err != nil {
+		log.Printf("Failed to make request: %v", err)
+		return nil, err
 	}
-	req, err := http.NewRequest("GET", baseURL, strings.NewReader(form.Encode()))
 	req.Header.Add("X-ESRI-Authorization", "Bearer "+access)
 	client := http.Client{}
+	log.Printf("GET %s", baseURL)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to do request: %v", err)
@@ -64,12 +66,24 @@ func findFieldseeker(access string) (*ArcGISSearchResponse, error) {
 		}
 		return nil, fmt.Errorf("API returned error status %d: %s", resp.StatusCode, bodyString)
 	}
-	var content ArcGISSearchResponse
+	/*var content ArcGISSearchResponse
 	err = json.Unmarshal(bodyBytes, &content)
 	if err != nil {
 		return nil, fmt.Errorf("Faied to unmarshal JSON: %v", err)
 	}
-	return &content, nil
+	return &content, nil*/
+	dest, err := os.Create("search.json")
+	if err != nil {
+		log.Printf("Faled to create output file: %v", err)
+		return nil, err
+	}
+	_, err = io.Copy(dest, bytes.NewReader(bodyBytes))
+	if err != nil {
+		log.Printf("Faled to write output file: %v", err)
+		return nil, err
+	}
+	log.Println("Wrote content to search.json")
+	return nil, errors.New("not implemented")
 }
 
 func tryPortal(access string) {
@@ -90,6 +104,15 @@ func tryPortal(access string) {
 	defer resp.Body.Close()
 	bodyBytes, err := io.ReadAll(resp.Body)
 	log.Printf("Response %d", resp.StatusCode)
-	bodyString := string(bodyBytes)
-	log.Printf("Body: %s", bodyString)
+	dest, err := os.Create("portal.json")
+	if err != nil {
+		log.Printf("Faled to create output file: %v", err)
+		return
+	}
+	_, err = io.Copy(dest, bytes.NewReader(bodyBytes))
+	if err != nil {
+		log.Printf("Faled to write output file: %v", err)
+		return
+	}
+	log.Println("Wrote content to portal.json")
 }
