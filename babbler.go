@@ -291,6 +291,9 @@ func formatNumber(buff io.Writer, number uint64, si bool) {
 var allChains []*MarkovChain
 
 func babbleLink(seed uint32) string {
+	if len(allChains) == 0 {
+		return "/babble/1/2/3"
+	}
 	chain := allChains[PRNG(&seed)%len(allChains)]
 	parts := make([]string, 0)
 	var i uint32 = 0
@@ -303,6 +306,9 @@ func babbleLink(seed uint32) string {
 }
 
 func babbleTitle(seed uint32) string {
+	if len(allChains) == 0 {
+		return "The grand poobah"
+	}
 	chain := allChains[PRNG(&seed)%len(allChains)]
 	return RandomText(chain, 10, &seed)
 }
