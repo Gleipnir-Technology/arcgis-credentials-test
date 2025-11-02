@@ -7,6 +7,25 @@ import (
 
 func getDashboard(w http.ResponseWriter, r *http.Request) {
 	username := sessionManager.GetString(r.Context(), "username")
+	if username == "" {
+		log.Println("Redirecting from dashboard since we don't have a username in this session")
+		http.Redirect(w, r, BaseURL+"/", http.StatusFound)
+		return
+	}
+	token, ok := TokenDatabase[username]
+	if !ok {
+		log.Printf("Redirecting from dashboard since we don't have a session for '%s'\n", username)
+		http.Redirect(w, r, BaseURL+"/", http.StatusFound)
+		return
+	}
+	/*search, err := findFieldseeker(token.AccessToken)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	log.Printf("Search: %s", search)*/
+	tryPortal(token.AccessToken)
+
 	err := htmlDashboard(w, r.URL.Path, username)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
